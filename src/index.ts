@@ -41,25 +41,31 @@ app.get('/datasheet/:id', async (req, res)=>{
 app.get('/currentWorth', async (req, res)=>{
   logger.info('GET /currentWorth');
   const holdings = await mongoClient.getHoldings();
-  logger.info('holdings retrieved from mongo. Getting fund values');
-  if (!holdings) {
-    throw Error('Holdings failed');
+  const valueCache = await mongoClient.getValueCache();
+  if (!valueCache) {
+    logger.info('holdings retrieved from mongo. Getting fund values');
+    if (!holdings) {
+      throw Error('Holdings failed');
+    }
+    const fundValues = await Promise.all(holdings.map(async (fund)=>{
+      const datasheet = await getFundById(fund.id, logger);
+      const value = round2dp(Number(datasheet.navPrice.mmValue) * fund.units);
+      return {
+        ...fund,
+        value,
+      };
+    }));
+    logger.info('Fund Values returned');
+    const totalWorth = round2dp(fundValues
+        .reduce((worth, fund)=> worth+fund.value, 0));
+    res.json({
+      totalWorth,
+      breakdown: fundValues,
+    });
+    await mongoClient.updateValueCache({totalWorth, funds: fundValues});
+    logger.info('GET /currentWorth resp sent, cache updated');
+  } else {
   }
-  const fundValues = await Promise.all(holdings.map(async (fund)=>{
-    const datasheet = await getFundById(fund.id, logger);
-    const value = round2dp(Number(datasheet.navPrice.mmValue) * fund.units);
-    return {
-      ...fund,
-      value,
-    };
-  }));
-  logger.info('Fund Values returned');
-  const totalWorth = round2dp(fundValues
-      .reduce((worth, fund)=> worth+fund.value, 0));
-  res.json({
-    totalWorth,
-    breakdown: fundValues,
-  });
   logger.info('GET /currentWorth resp sent');
 });
 

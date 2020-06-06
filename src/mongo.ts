@@ -4,7 +4,14 @@ import winston from 'winston';
 interface Fund {
   id: string,
   name: string,
-  units: number
+  units: number,
+  value?: number
+}
+
+interface Cache {
+  funds: Fund[],
+  totalWorth: number,
+  timestamp?: Date,
 }
 
 /**
@@ -66,6 +73,42 @@ class MongoClient {
     this.logger.debug('holdings updated');
     await this.disconnect(client);
     return;
+  };
+
+  getValueCache = async (): Promise<Cache | undefined> => {
+    const client = await this.connect();
+    this.logger.debug('getting current holdings value from cache');
+    const cache = await client.db().collection('valueCache').findOne({});
+    if (!cache) {
+      this.logger.debug('cache miss (cache does not exist)');
+      return undefined;
+    }
+    if (cache.timestamp < (Number(new Date()) - 1000 * 60 * 60 *24) ) {
+      // cache has expired (24h)
+      this.logger.debug('cache miss (cache expired)');
+      return undefined;
+    }
+    await this.disconnect(client);
+    delete cache.unique;
+    return cache;
+  }
+
+  updateValueCache = async ({totalWorth, funds}: Cache)=>{
+    const client = await this.connect();
+    this.logger.debug('updating cached values');
+    client.db().collection('valueCache')
+        .updateOne(
+            {unique: '1'},
+            {
+              $set: {
+                totalWorth,
+                funds,
+                timestamp: new Date(),
+                unique: '1',
+              },
+            },
+            {upsert: true},
+        );
   }
 };
 
