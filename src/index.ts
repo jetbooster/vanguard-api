@@ -8,6 +8,7 @@ const app = express();
 const mClient = new Mongo();
 
 const HASS_API_KEY = readFileSync('./HASS_API_KEY', 'utf-8');
+console.log(HASS_API_KEY);
 
 const round2dp = (number:number): number => {
   return Math.round((number+Number.EPSILON)*100)/100;
@@ -50,7 +51,7 @@ app.get('/currentWorth', async (req, res)=>{
   }, {
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer: ${HASS_API_KEY}`,
+      'Authorization': `Bearer ${HASS_API_KEY}`,
     },
   });
   res.json({
