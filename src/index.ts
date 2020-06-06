@@ -65,8 +65,9 @@ app.get('/currentWorth', async (req, res)=>{
     await mongoClient.updateValueCache({totalWorth, funds: fundValues});
     logger.info('GET /currentWorth resp sent, cache updated');
   } else {
+    res.json(valueCache);
+    logger.info('GET /currentWorth resp sent');
   }
-  logger.info('GET /currentWorth resp sent');
 });
 
 app.listen(5000);
