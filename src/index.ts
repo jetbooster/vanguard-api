@@ -43,7 +43,7 @@ app.get('/currentWorth', async (req, res)=>{
   const holdings = await mongoClient.getHoldings();
   const valueCache = await mongoClient.getValueCache();
   if (!valueCache) {
-    logger.info('holdings retrieved from mongo. Getting fund values');
+    logger.info('Cache expired. Getting fund values');
     if (!holdings) {
       throw Error('Holdings failed');
     }
