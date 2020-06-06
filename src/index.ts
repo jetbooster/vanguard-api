@@ -40,6 +40,19 @@ app.get('/currentWorth', async (req, res)=>{
   console.log(fundValues);
   const totalWorth = round2dp(fundValues
       .reduce((worth, fund)=> worth+fund.value, 0));
+  axios.post('http://192.168.8.113:8123/api/states/sensor.vanguard_api', {
+    state: totalWorth,
+    attributes: {
+      unit_of_measurement: '£',
+      friendly_name: 'Vanguard Value',
+      fundValues,
+    },
+  }, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer: ${HASS_API_KEY}`,
+    },
+  });
   res.json({
     totalWorth,
     breakdown: fundValues,
