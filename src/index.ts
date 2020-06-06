@@ -1,14 +1,15 @@
 import express from 'express';
-import Mongo from './mongo';
+import MongoClient from './mongo';
 import {getFundById} from './vanguard';
 
-import {format, transports} from 'winston';
-import expressWinston from 'express-winston';
+import {format, createLogger, transports} from 'winston';
 
-const app = express();
-const mClient = new Mongo();
+const round2dp = (number:number): number => {
+  return Math.round((number+Number.EPSILON)*100)/100;
+};
 
-const expressLogger = expressWinston.logger({
+const logger = createLogger({
+  level: 'info',
   transports: [
     new transports.Console(),
     new transports.File({filename: 'error.log', level: 'error'}),
@@ -18,45 +19,48 @@ const expressLogger = expressWinston.logger({
       format.colorize(),
       format.json(),
   ),
-  colorize: true,
 });
 
-app.use(expressLogger);
-
-const round2dp = (number:number): number => {
-  return Math.round((number+Number.EPSILON)*100)/100;
-};
+const app = express();
+const mongoClient = new MongoClient(logger);
 
 app.get('/holdings', async (req, res)=>{
-  const portfolio = await mClient.getHoldings();
+  logger.info('GET /holdings');
+  const portfolio = await mongoClient.getHoldings();
   res.json(portfolio);
+  logger.info('GET /holding resp sent');
 });
 
 app.get('/datasheet/:id', async (req, res)=>{
-  const result = await getFundById(req.params.id);
-  console.log(result);
+  logger.info('GET /datasheet/', req.params.id);
+  const result = await getFundById(req.params.id, logger);
   res.send(result);
+  logger.info('GET /datasheet resp sent');
 });
 
 app.get('/currentWorth', async (req, res)=>{
-  const holdings = await mClient.getHoldings();
+  logger.info('GET /currentWorth');
+  const holdings = await mongoClient.getHoldings();
+  logger.info('holdings retrieved from mongo. Getting fund values');
   if (!holdings) {
     throw Error('Holdings failed');
   }
   const fundValues = await Promise.all(holdings.map(async (fund)=>{
-    const datasheet = await getFundById(fund.id);
+    const datasheet = await getFundById(fund.id, logger);
     const value = round2dp(Number(datasheet.navPrice.mmValue) * fund.units);
     return {
       ...fund,
       value,
     };
   }));
+  logger.info('Fund Values returned');
   const totalWorth = round2dp(fundValues
       .reduce((worth, fund)=> worth+fund.value, 0));
   res.json({
     totalWorth,
     breakdown: fundValues,
   });
+  logger.info('GET /currentWorth resp sent');
 });
 
 app.listen(5000);
