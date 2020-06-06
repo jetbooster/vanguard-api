@@ -7,7 +7,7 @@ import {readFileSync} from 'fs';
 const app = express();
 const mClient = new Mongo();
 
-const HASS_API_KEY = readFileSync('../HASS_API_KEY');
+const HASS_API_KEY = readFileSync('./HASS_API_KEY', 'utf-8');
 
 const round2dp = (number:number): number => {
   return Math.round((number+Number.EPSILON)*100)/100;
