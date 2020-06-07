@@ -12,8 +12,8 @@ const round2dp = (number:number): number => {
 };
 
 const genShortformData = (totalWorth:number, funds: Fund[])=>{
-  const vgWorth = funds.filter((fund)=>fund.fundType==='vanguard').reduce((acc, fund)=>acc+fund.value, 0);
-  const btcWorth = funds.filter((fund)=>fund.fundType==='bitcoin').reduce((acc, fund)=>acc+fund.value, 0);
+  const vgWorth = round2dp(funds.filter((fund)=>fund.fundType==='vanguard').reduce((acc, fund)=>acc+fund.value, 0));
+  const btcWorth = round2dp(funds.filter((fund)=>fund.fundType==='bitcoin').reduce((acc, fund)=>acc+fund.value, 0));
   return {
     total: totalWorth,
     vg: vgWorth,
