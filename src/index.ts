@@ -11,6 +11,16 @@ const round2dp = (number:number): number => {
   return Math.round((number+Number.EPSILON)*100)/100;
 };
 
+const genShortformData = (totalWorth:number, funds: Fund[])=>{
+  const vgWorth = funds.filter((fund)=>fund.fundType==='vanguard').reduce((acc, fund)=>acc+fund.value, 0);
+  const btcWorth = funds.filter((fund)=>fund.fundType==='bitcoin').reduce((acc, fund)=>acc+fund.value, 0);
+  return {
+    total: totalWorth,
+    vg: vgWorth,
+    btc: btcWorth,
+  };
+};
+
 const logger = createLogger({
   level: 'info',
   transports: [
@@ -72,9 +82,12 @@ app.get('/currentWorth', async (req, res)=>{
     logger.info('Fund Values returned');
     const totalWorth = round2dp(fundValues
         .reduce((worth, fund)=> worth+fund.value, 0));
+
+
     res.json({
       totalWorth,
-      breakdown: fundValues,
+      funds: fundValues,
+      trimmed: genShortformData(totalWorth, fundValues),
     });
     await mongoClient.updateValueCache({totalWorth, funds: fundValues});
     logger.info('GET /currentWorth resp sent, cache updated');
