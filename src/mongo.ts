@@ -76,8 +76,8 @@ class MongoClient {
       this.logger.debug('cache miss (cache does not exist)');
       return undefined;
     }
-    if (cache.timestamp < (Number(new Date()) - 1000 * 60 * 60 *24) ) {
-      // cache has expired (24h)
+    if (cache.timestamp < (Number(new Date()) - 1000 * 60 * 60 * 3) ) {
+      // cache has expired (3h)
       this.logger.debug('cache miss (cache expired)');
       return undefined;
     }
