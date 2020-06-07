@@ -92,7 +92,8 @@ app.get('/currentWorth', async (req, res)=>{
     await mongoClient.updateValueCache({totalWorth, funds: fundValues});
     logger.info('GET /currentWorth resp sent, cache updated');
   } else {
-    res.json(valueCache);
+    const trimmedValues = genShortformData(valueCache.totalWorth, valueCache.funds);
+    res.json({...valueCache, trimmed: trimmedValues});
     logger.info('GET /currentWorth resp sent');
   }
 });
