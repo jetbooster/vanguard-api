@@ -86,6 +86,13 @@ class MongoClient {
     return cache;
   }
 
+  clearValueCache = async () => {
+    const client = await this.connect();
+    this.logger.debug('clearing cache');
+    await client.db().collection('valueCache').deleteOne({unique: '1'});
+    await this.disconnect(client);
+  }
+
   updateValueCache = async ({totalWorth, funds}: Cache)=>{
     const client = await this.connect();
     this.logger.debug('updating cached values');

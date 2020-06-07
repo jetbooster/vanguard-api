@@ -98,4 +98,14 @@ app.get('/currentWorth', async (req, res)=>{
   }
 });
 
+app.get('/cache/clear', async (req, res)=>{
+  await mongoClient.clearValueCache();
+  res.json({result: 'ok'});
+});
+
+app.get('/cache', async (req, res)=>{
+  const cache = await mongoClient.getValueCache();
+  res.json(cache);
+});
+
 app.listen(5000);
