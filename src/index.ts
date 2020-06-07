@@ -24,7 +24,6 @@ const genShortformData = (totalWorth:number, funds: Fund[])=>{
 const logger = createLogger({
   level: 'info',
   transports: [
-    new transports.Console(),
     new transports.File({filename: 'error.log', level: 'error'}),
     new transports.File({filename: 'combined.log'}),
   ],
@@ -99,13 +98,21 @@ app.get('/currentWorth', async (req, res)=>{
 });
 
 app.get('/cache/clear', async (req, res)=>{
+  logger.info('GET /cache/clear');
   await mongoClient.clearValueCache();
   res.json({result: 'ok'});
 });
 
 app.get('/cache', async (req, res)=>{
+  logger.info('GET /cache');
   const cache = await mongoClient.getValueCache();
   res.json(cache);
 });
+
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(new transports.Console({
+    format: format.simple(),
+  }));
+}
 
 app.listen(5000);
