@@ -126,3 +126,19 @@ export interface Sibling {
   distributionStrategyDesc: string;
   id: string;
 }
+
+export type FundType ='bitcoin' | 'vanguard'
+
+export interface Fund {
+  id: string,
+  name: string,
+  units: number,
+  value: number
+  fundType: FundType
+}
+
+export interface Cache {
+  funds: Fund[],
+  totalWorth: number,
+  timestamp?: Date,
+}

@@ -1,18 +1,8 @@
 import {MongoClient as MClient} from 'mongodb';
 import winston from 'winston';
 
-interface Fund {
-  id: string,
-  name: string,
-  units: number,
-  value?: number
-}
+import {Fund, Cache} from './types';
 
-interface Cache {
-  funds: Fund[],
-  totalWorth: number,
-  timestamp?: Date,
-}
 
 /**
  * Some JSDOC
@@ -48,7 +38,7 @@ class MongoClient {
     await client.close();
   }
 
-  getHoldings = async (): Promise<Fund[]| undefined>=>{
+  getHoldings = async (): Promise<Fund[]>=>{
     const client = await this.connect();
     this.logger.debug('mongo getting holdings');
     const result = (await client.db()
@@ -57,6 +47,9 @@ class MongoClient {
         .toArray()).map((item)=>{
       delete item._id; return item;
     });
+    if (!result) {
+      throw Error('Could not find holdings');
+    }
     this.logger.debug('holdings got');
     await this.disconnect(client);
     return result;

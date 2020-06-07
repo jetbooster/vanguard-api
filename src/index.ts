@@ -3,6 +3,9 @@ import MongoClient from './mongo';
 import {getFundById} from './vanguard';
 
 import {format, createLogger, transports} from 'winston';
+import {getCoinbaseHoldings} from './coinbase';
+
+import {Fund} from './types';
 
 const round2dp = (number:number): number => {
   return Math.round((number+Number.EPSILON)*100)/100;
@@ -47,13 +50,24 @@ app.get('/currentWorth', async (req, res)=>{
     if (!holdings) {
       throw Error('Holdings failed');
     }
-    const fundValues = await Promise.all(holdings.map(async (fund)=>{
-      const datasheet = await getFundById(fund.id, logger);
-      const value = round2dp(Number(datasheet.navPrice.mmValue) * fund.units);
-      return {
-        ...fund,
-        value,
-      };
+    const fundValues = await Promise.all(holdings.map<Promise<Fund>>(async (fund)=>{
+      switch (fund.fundType) {
+        case 'vanguard': {
+          const datasheet = await getFundById(fund.id, logger);
+          const value = round2dp(Number(datasheet.navPrice.mmValue) * fund.units);
+          return {
+            ...fund,
+            fundType: 'vanguard',
+            value,
+          };
+        }
+        case 'bitcoin': {
+          return getCoinbaseHoldings();
+        }
+        default: {
+          throw Error('unrecognised Holding Type');
+        }
+      }
     }));
     logger.info('Fund Values returned');
     const totalWorth = round2dp(fundValues

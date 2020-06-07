@@ -105,3 +105,5 @@ dist
 
 holdings.json
 build
+
+COINBASE_API_FILE
